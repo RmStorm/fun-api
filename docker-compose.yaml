@@ -1,0 +1,11 @@
+---
+version: '3.8'
+services:
+  fun_api:
+    build: .
+    container_name: fun_api
+    ports:
+    - 8000:8000
+    environment:
+      - READY=t
+      - HEALTHY=t

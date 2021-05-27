@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "fun-api"
+version = "0.1.0"
+description = "A small API for playing around"
+authors = ["RmStorm <roald.storm@kolonial.no>"]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = {extras = ["all"], version = "^0.65.1"}
+uvicorn = {extras = ["standard"], version = "^0.13.4"}
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.4"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
