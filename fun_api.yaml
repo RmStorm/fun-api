@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: roald-web-api
+  namespace: infra
+  labels:
+    app: roald-api
+spec:
+  # serviceAccountName: interno
+  containers:
+    - image: eu.gcr.io/nube-hub/roald-api:latest
+      name: fastapi
+      ports:
+        - containerPort: 8000
+      livenessProbe:
+        httpGet:
+          path: /health/
+          port: 8000
+        periodSeconds: 30

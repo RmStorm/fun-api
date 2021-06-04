@@ -1,9 +1,16 @@
 import logging
 import os
+import asyncio
 from distutils.util import strtobool
 
 from typing import Optional
+
+import aiohttp
 from fastapi import FastAPI, HTTPException
+import google.auth
+import google.auth.transport.requests as gauth_requests
+from google.auth import compute_engine
+
 
 app = FastAPI()
 
@@ -23,6 +30,36 @@ class ConfigurableChecks:
 
 
 CONFIGURABLE_CHECKS = ConfigurableChecks()
+
+
+async def alma_heartbeat():
+    try:
+        credentials, _ = google.auth.default()
+        credentials.refresh(gauth_requests.Request())
+        if getattr(credentials, 'id_token', None) is None:
+            credentials = compute_engine.IDTokenCredentials(gauth_requests.Request(), 'my-audience',
+                                                            use_metadata_identity_endpoint=True)
+            credentials.refresh(gauth_requests.Request())
+            headers = {"authorization": f"Bearer {credentials.token}"}
+        else:
+            headers = {"authorization": f"Bearer {credentials.id_token}"}
+    except Exception as e:
+        headers = {}
+
+    async with aiohttp.ClientSession() as session:
+        while True:
+            async with session.get('https://alma.osl1.staging.nube.tech/api/foo', headers=headers) as resp:
+                if resp.status == 200:
+                    logging.info('successfully reached Alma')
+                else:
+                    logging.info(f'could not reach Alma, auth status= {resp.status}')
+            await asyncio.sleep(5)
+
+
+@app.on_event("startup")
+async def startup_event():
+    loop = asyncio.get_event_loop()
+    loop.create_task(alma_heartbeat())
 
 
 @app.get("/")
