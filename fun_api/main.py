@@ -48,8 +48,10 @@ async def alma_heartbeat():
 
     async with aiohttp.ClientSession() as session:
         while True:
-            async with session.get('https://alma.osl1.staging.nube.tech/api/foo', headers=headers) as resp:
-                if resp.status == 200:
+            async with session.put('https://alma.osl1.staging.nube.tech/api/monitor/plc/C01/alerts/',
+                                   data={},
+                                   headers=headers) as resp:
+                if resp.status in [200, 204]:
                     logging.info('successfully reached Alma')
                 else:
                     logging.info(f'could not reach Alma, auth status= {resp.status}')
