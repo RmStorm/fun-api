@@ -5,7 +5,7 @@ from distutils.util import strtobool
 from typing import Optional
 
 from fastapi import FastAPI, HTTPException
-
+from starlette.responses import HTMLResponse
 
 app = FastAPI()
 
@@ -63,3 +63,18 @@ async def echo(value: bool):
 @app.get("/setready/")
 async def echo(value: bool):
     CONFIGURABLE_CHECKS.ready = value
+
+
+@app.get("/{rest_of_path:path}", response_class=HTMLResponse)
+async def catch_all(rest_of_path: str):
+    return f"""
+    <html>
+        <head>
+            <title>Some HTML in here</title>
+        </head>
+        <body>
+            <h1>Currently hitting: '{os.getenv('SERVICE_NAME', 'no service')}'</h1>
+            <p>You tried to navigate to: '{rest_of_path}'</p>
+        </body>
+    </html>
+    """
