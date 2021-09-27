@@ -1,6 +1,8 @@
+import asyncio
 import logging
 import os
 from distutils.util import strtobool
+import datetime as dt
 
 from typing import Optional
 
@@ -56,7 +58,7 @@ async def ready():
 
 
 @app.get("/sethealth/")
-async def echo(value: bool):
+async def sethealth(value: bool):
     CONFIGURABLE_CHECKS.healthy = value
 
 
@@ -65,16 +67,35 @@ async def echo(value: bool):
     CONFIGURABLE_CHECKS.ready = value
 
 
-@app.get("/{rest_of_path:path}", response_class=HTMLResponse)
-async def catch_all(rest_of_path: str):
-    return f"""
-    <html>
-        <head>
-            <title>Some HTML in here</title>
-        </head>
-        <body>
-            <h1>Currently hitting: '{os.getenv('SERVICE_NAME', 'no service')}'</h1>
-            <p>You tried to navigate to: '{rest_of_path}'</p>
-        </body>
-    </html>
-    """
+@app.get("/who-am-i/")
+async def who_am_i():
+    return os.getenv('POD_NAME', "no env var 'POD_NAME' found")
+
+
+@app.get("/blow-up-cpu/")
+async def blow_up_cpu(duration: float):
+    duration = dt.timedelta(seconds=duration)
+    now = dt.datetime.now()
+    x = 0
+    while dt.datetime.now()-now < duration:
+        while x < 1000:
+            x += 1
+        await asyncio.sleep(.001)
+        while x > 0:
+            x -= 1
+        print('were goinngnggg')
+
+
+# @app.get("/{rest_of_path:path}", response_class=HTMLResponse)
+# async def catch_all(rest_of_path: str):
+#     return f"""
+#     <html>
+#         <head>
+#             <title>Some HTML in here</title>
+#         </head>
+#         <body>
+#             <h1>Currently hitting: '{os.getenv('SERVICE_NAME', 'no service')}'</h1>
+#             <p>You tried to navigate to: '{rest_of_path}'</p>
+#         </body>
+#     </html>
+#     """
