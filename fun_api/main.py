@@ -80,7 +80,7 @@ async def blow_up_cpu(duration: float):
     while dt.datetime.now()-now < duration:
         while x < 1000:
             x += 1
-        await asyncio.sleep(.001)
+        await asyncio.sleep(.00001)
         while x > 0:
             x -= 1
         print('were goinngnggg')
