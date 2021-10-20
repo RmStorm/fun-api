@@ -1,0 +1,57 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches:
+      - main
+    types:
+      - completed
+
+jobs:
+  deploy:
+    if: github.event.workflow_run.conclusion == 'success'
+    name: Deploy
+    runs-on: ubuntu-20.04
+    steps:
+      - name: checkout repo content
+        uses: actions/checkout@v2 # checkout the repository content to github runner.
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9 #install the python needed
+
+      - name: Set up Poetry
+        uses: snok/install-poetry@v1.2
+        with:
+          version: 1.1.4
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+
+      - name: Load Poetry cache
+        id: cached-poetry-dependencies
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-poetry-
+
+      - name: Install dependencies
+        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
+        run: poetry install --no-interaction --no-root
+
+      - name: Cache Python venv
+        id: cache-venv
+        uses: actions/cache@v2
+        with:
+          path: .venv
+          key: ${{ runner.os }}-poetry-${{ hashFiles('poetry.lock') }}
+
+      - name: execute py script
+        run: |
+          poetry run python .github/scripts/scrape_workflow_info.py
+        env:
+          PRECEDING_RUN_ID: ${{ github.event.workflow_run.id }}
+          PRECEDING_RUN_NAME: ${{ github.event.workflow.name }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}

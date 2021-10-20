@@ -1,0 +1,25 @@
+---
+name: CI
+
+on: push
+
+env:
+  IMAGE: eu.gcr.io/nube-hub/roald-api
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-20.04
+    steps:
+    - run: echo "not smoketest $PRECEDING_RUN_ID"
+      env:
+        PRECEDING_RUN_ID: ${{ github.event.workflow_run.id }}
+
+  another-job:
+    name: test
+    runs-on: ubuntu-20.04
+    steps:
+    - name: some-cool-name
+      run: echo "not smoketest $PRECEDING_RUN_ID"
+      env:
+        PRECEDING_RUN_ID: ${{ github.event.workflow_run.id }}
