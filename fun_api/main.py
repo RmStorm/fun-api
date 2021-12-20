@@ -1,12 +1,14 @@
 import asyncio
 import logging
 import os
+import time
 from distutils.util import strtobool
 import datetime as dt
 
 from typing import Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import PlainTextResponse
 from starlette.responses import HTMLResponse
 
 app = FastAPI()
@@ -86,16 +88,42 @@ async def blow_up_cpu(duration: float):
         print('were goinngnggg')
 
 
-# @app.get("/{rest_of_path:path}", response_class=HTMLResponse)
-# async def catch_all(rest_of_path: str):
-#     return f"""
-#     <html>
-#         <head>
-#             <title>Some HTML in here</title>
-#         </head>
-#         <body>
-#             <h1>Currently hitting: '{os.getenv('SERVICE_NAME', 'no service')}'</h1>
-#             <p>You tried to navigate to: '{rest_of_path}'</p>
-#         </body>
-#     </html>
-#     """
+@app.get("/auth")
+async def auth(request: Request):
+    print("\nHEADERS:")
+    for k, v in request.headers.items():
+        print(f"{k} - {v}")
+    print('\nHitted auth!')
+    headers = {'X-User-HIYA': 'waza'}
+    response = PlainTextResponse("OK", 200, {k: v for k, v in headers.items() if v})
+    now = time.time()
+    response.set_cookie(
+        "fakesessionsecret",
+        'a dope cookie!!',
+        max_age=now + 3600,  # type: ignore[operator]
+        expires=now + 3600,  # type: ignore[operator]
+        path="/",
+        domain='demo.local',
+        secure=False,
+        httponly=True,
+        samesite="lax",
+    )
+    return response
+
+
+@app.get("/{rest_of_path:path}", response_class=HTMLResponse)
+async def catch_all(rest_of_path: str, request: Request):
+    print("\nHEADERS:")
+    for k, v in request.headers.items():
+        print(f"{k} - {v}")
+    return f"""
+    <html>
+        <head>
+            <title>Some HTML in here</title>
+        </head>
+        <body>
+            <h1>Currently hitting: '{os.getenv('SERVICE_NAME', 'no service')}'</h1>
+            <p>You tried to navigate to: '{rest_of_path}'</p>
+        </body>
+    </html>
+    """
