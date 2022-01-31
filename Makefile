@@ -3,3 +3,6 @@ build:
 
 push:
 	docker push eu.gcr.io/nube-hub/roald-api:latest
+
+boom: build push
+	echo BURN IT DOWN

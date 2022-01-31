@@ -119,3 +119,36 @@ spec:
       component: "cool-component"
   policyTypes:
   - Ingress
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: "test-api-ingress"
+  namespace: "infra"
+  labels:
+    app: "test-api-roald"
+    component: "cool-component"
+    owner: roald
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/proxy-body-size: "40m"
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/auth-response-headers: X-User-ID,X-User-Email,X-User,X-User-Locale,X-User-Groups
+    nginx.ingress.kubernetes.io/auth-url: http://auth.ingress.svc.cluster.local/auth
+    nginx.ingress.kubernetes.io/auth-signin: https://auth.dev.nube.tech/signin?redirect=https://roaldapi.dev.nube.tech$escaped_request_uri
+spec:
+  rules:
+  - host: roaldapi.dev.nube.tech
+    http:
+      paths:
+      - path: "/"
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: "test-api-roald-service"
+            port:
+              number: 8000
+  tls:
+  - hosts:
+    - roaldapi.dev.nube.tech
+    secretName: roald-api-secret
