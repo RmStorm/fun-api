@@ -2,17 +2,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: "test-api-roald"
+  name: "test-api-roald1"
   namespace: "infra"
   labels:
     app: "test-api-roald"
     component: "cool-component"
+    role: "api1"
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: "test-api-roald"
       component: "cool-component"
+      role: "api1"
   strategy:
     rollingUpdate:
       maxSurge: 150%
@@ -25,6 +27,7 @@ spec:
       labels:
         app: "test-api-roald"
         component: "cool-component"
+        role: "api1"
     spec:
       nodeSelector:
         node-pool-group: standard
@@ -68,11 +71,12 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: "test-api-roald-service"
+  name: "test-api-roald-service1"
   namespace: "infra"
   labels:
     app: "test-api-roald"
     component: "cool-component"
+    role: "api1"
 spec:
   ports:
     - name: metrics
@@ -82,6 +86,189 @@ spec:
   selector:
     app: "test-api-roald"
     component: "cool-component"
+    role: "api1"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "test-api-roald2"
+  namespace: "infra"
+  labels:
+    app: "test-api-roald"
+    component: "cool-component"
+    role: "api2"
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: "test-api-roald"
+      component: "cool-component"
+      role: "api2"
+  strategy:
+    rollingUpdate:
+      maxSurge: 200%
+      maxUnavailable: 60%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app: "test-api-roald"
+        component: "cool-component"
+        role: "api2"
+    spec:
+      nodeSelector:
+        node-pool-group: standard
+      tolerations:
+        - key: node-pool-group
+          operator: Equal
+          value: standard
+          effect: NoSchedule
+      containers:
+        - name: fun-api
+          image: eu.gcr.io/nube-hub/roald-api:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 350m
+              memory: 128Mi
+          lifecycle:
+            preStop:
+              exec:
+                command: [ "/bin/sleep", "5" ]
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 0
+            timeoutSeconds: 1
+            successThreshold: 1
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "test-api-roald-service2"
+  namespace: "infra"
+  labels:
+    app: "test-api-roald"
+    component: "cool-component"
+    role: "api2"
+spec:
+  ports:
+    - name: metrics
+      port: 8000
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: "test-api-roald"
+    component: "cool-component"
+    role: "api2"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "test-api-roald3"
+  namespace: "infra"
+  labels:
+    app: "test-api-roald"
+    component: "cool-component"
+    role: "api3"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: "test-api-roald"
+      component: "cool-component"
+      role: "api3"
+  strategy:
+    rollingUpdate:
+      maxSurge: 150%
+      maxUnavailable: 60%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+      labels:
+        app: "test-api-roald"
+        component: "cool-component"
+        role: "api3"
+    spec:
+      nodeSelector:
+        node-pool-group: standard
+      tolerations:
+        - key: node-pool-group
+          operator: Equal
+          value: standard
+          effect: NoSchedule
+      containers:
+        - name: fun-api
+          image: eu.gcr.io/nube-hub/roald-api:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 500m
+              memory: 256Mi
+            requests:
+              cpu: 350m
+              memory: 128Mi
+#          livenessProbe:
+#            httpGet:
+#              path: /health
+#              port: http
+#              scheme: HTTP
+#            initialDelaySeconds: 0
+#            timeoutSeconds: 1
+#          readinessProbe:
+#            httpGet:
+#              path: /ready
+#              port: http
+#              scheme: HTTP
+#            initialDelaySeconds: 0
+#            timeoutSeconds: 1
+#            successThreshold: 1
+#            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: "test-api-roald-service3"
+  namespace: "infra"
+  labels:
+    app: "test-api-roald"
+    component: "cool-component"
+    role: "api3"
+spec:
+  ports:
+    - name: metrics
+      port: 8000
+      targetPort: http
+      protocol: TCP
+  selector:
+    app: "test-api-roald"
+    component: "cool-component"
+    role: "api3"
 ---
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
@@ -99,6 +286,7 @@ spec:
   endpoints:
   - port: metrics
     honorLabels: true
+    interval: 5s
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -145,7 +333,7 @@ spec:
         pathType: ImplementationSpecific
         backend:
           service:
-            name: "test-api-roald-service"
+            name: "test-api-roald-service1"
             port:
               number: 8000
   tls:

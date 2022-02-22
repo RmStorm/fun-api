@@ -1,11 +1,27 @@
 ---
 version: '3.8'
 services:
-  fun_api:
+  fun_api1:
     build: .
-    container_name: fun_api
+    container_name: fun_api1
     ports:
-    - 8000:8000
+    - "8001:8000"
+    environment:
+      - READY=t
+      - HEALTHY=t
+  fun_api2:
+    build: .
+    container_name: fun_api2
+    ports:
+      - "8002:8000"
+    environment:
+      - READY=t
+      - HEALTHY=t
+  fun_api3:
+    build: .
+    container_name: fun_api3
+    ports:
+      - "8003:8000"
     environment:
       - READY=t
       - HEALTHY=t
